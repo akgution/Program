@@ -16,10 +16,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
-
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import java.io.File
 
 @Composable
 fun SplashScreen() {
+    val context = LocalContext.current
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -36,8 +40,6 @@ fun SplashScreen() {
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_shield_eye),
-                //imageVector = Icons.Default.Visibility,
-
                 contentDescription = "Logo",
                 tint = Color.White,
                 modifier = Modifier.size(100.dp)
@@ -57,7 +59,15 @@ fun SplashScreen() {
             )
 
             Button(
-                onClick = { /* TODO: Face ID login */ },
+                onClick = {
+                    val file = File(context.filesDir, "Facelogin.id")
+                    if (!file.exists()) {
+                        file.writeText("FAKE_FACE_DATA")
+                        Toast.makeText(context, "Обличчя збережено", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "Файл FaceID вже існує", Toast.LENGTH_SHORT).show()
+                    }
+                },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
             ) {
                 Text(text = "Face ID / Вхід", color = Color.White)
