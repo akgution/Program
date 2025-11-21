@@ -54,6 +54,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.stopchase.screens.SplashScreen
 
+// Test gitHub
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
