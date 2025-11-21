@@ -51,7 +51,7 @@ fun SplashScreen() {
             )
 
             Text(
-                text = "Захисти своє приватне життя",
+                text = "Захисти своє приватне життя!",
                 fontSize = 16.sp,
                 color = Color.LightGray
             )
