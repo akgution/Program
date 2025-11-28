@@ -52,15 +52,57 @@ package com.example.stopchase
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.stopchase.screens.FaceCaptureScreen
 import com.example.stopchase.screens.SplashScreen
 
 // Test gitHub
 
 class MainActivity : ComponentActivity() {
+    /*override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            SplashScreen(
+                onFaceLogin = {
+                    // Тут запускаєш FaceCaptureScreen або логіку перевірки
+                    navController.navigate("face_capture")
+                }
+            )
+        }
+    }*/
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            SplashScreen()
+            val navController = rememberNavController()
+
+            NavHost(navController = navController, startDestination = "splash") {
+                composable("splash") {
+                    SplashScreen(
+                        onFaceLogin = {
+                            navController.navigate("face_capture")
+                        }
+                    )
+                }
+
+                composable("face_capture") {
+                    FaceCaptureScreen(
+                        onFaceCaptured = {
+                            navController.navigate("home")
+                        }
+                    )
+                }
+                /*
+                composable("home") {
+                    HomeScreen()
+                }
+                                 */
+            }
         }
     }
 }
+
+
+
