@@ -61,51 +61,6 @@ fun SplashScreen(
                 fontSize = 16.sp,
                 color = Color.LightGray
             )
-/*
-            Button(
-                onClick = {
-                    onFaceLogin() // ⬅️ тепер викликаєш логіку входу
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-            ) {
-                Text(text = "Face ID / Вхід", color = Color.White)
-            }
-*//*
-            Button(onClick = {
-                val imageProxy = imageProxyRef.value
-                if (imageProxy != null) {
-                    processImageProxy(imageProxy, context) { isRecognized ->
-                        if (isRecognized) {
-                            Toast.makeText(context, "Обличчя впізнано!", Toast.LENGTH_SHORT).show()
-                            navController.navigate("home") // або інший екран
-                        } else {
-                            Toast.makeText(context, "Обличчя не впізнано!", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    Toast.makeText(context, "Немає кадру для аналізу", Toast.LENGTH_SHORT).show()
-                }
-            }) {
-                Text("Підтвердити обличчя")
-            }*/
-/*
-            Button(onClick = {
-                val imageProxy = imageProxyRef.value
-                if (imageProxy != null) {
-                    processImageProxy(imageProxy, context) { isRecognized ->
-                        if (isRecognized) {
-                            Toast.makeText(context, "Обличчя впізнано!", Toast.LENGTH_SHORT).show()
-                            onFaceLogin() // ✅ викликає передану функцію
-                        } else {
-                            Toast.makeText(context, "Обличчя не впізнано!", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                } else {
-                    Toast.makeText(context, "Немає кадру для аналізу", Toast.LENGTH_SHORT).show()
-                }
-            }) {
-                Text("Підтвердити обличчя")
-            }*/
 
             Button(onClick = {
                 val imageProxy = imageProxyRef.value

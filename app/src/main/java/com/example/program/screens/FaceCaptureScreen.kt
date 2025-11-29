@@ -34,28 +34,42 @@ import androidx.camera.core.Preview
 import androidx.core.app.ActivityCompat
 import java.io.ByteArrayOutputStream
 import androidx.navigation.NavHostController
+import org.tensorflow.lite.DataType
+import org.tensorflow.lite.support.common.ops.NormalizeOp
+import org.tensorflow.lite.support.image.TensorImage
+import org.tensorflow.lite.support.image.ops.ResizeOp
 import java.io.File
+import java.nio.ByteBuffer
 import kotlin.math.sqrt
+import org.tensorflow.lite.support.image.ImageProcessor
+import java.nio.ByteOrder
 
 
 // Ми були вимушені додати ці анотації бо без них компілятор бачив помилку в використанні ImageProxy
 
-fun preprocessFaceBitmap(bitmap: Bitmap): Array<Array<Array<FloatArray>>> {
-    val resized = Bitmap.createScaledBitmap(bitmap, 112, 112, true)
-    val input = Array(1) { Array(112) { Array(112) { FloatArray(3) } } }
+fun preprocessFaceBitmap(context: Context, bitmap: Bitmap): ByteBuffer {
+    val imageProcessor = ImageProcessor.Builder()
+        .add(ResizeOp(112, 112, ResizeOp.ResizeMethod.BILINEAR))
+        .add(NormalizeOp(0f, 255f))
+        .build()
 
-    for (y in 0 until 112) {
-        for (x in 0 until 112) {
-            val pixel = resized.getPixel(x, y)
-            input[0][y][x][0] = (Color.red(pixel) / 255.0f)
-            input[0][y][x][1] = (Color.green(pixel) / 255.0f)
-            input[0][y][x][2] = (Color.blue(pixel) / 255.0f)
-        }
-    }
+    val tensorImage = TensorImage(DataType.FLOAT32)
+    tensorImage.load(bitmap)
+    val processedImage = imageProcessor.process(tensorImage)
 
-    return input
+    val singleImageBuffer = processedImage.buffer
+
+    // Створюємо буфер для batch із 2 зображень
+    val batchBuffer = ByteBuffer.allocateDirect(2 * singleImageBuffer.capacity())
+    batchBuffer.order(ByteOrder.nativeOrder())
+
+    // Копіюємо одне зображення двічі (можна замінити другим, якщо є)
+    batchBuffer.put(singleImageBuffer)
+    batchBuffer.put(singleImageBuffer)
+    batchBuffer.rewind()
+
+    return batchBuffer
 }
-
 
 @Composable
 fun FaceCaptureScreen(navController: NavHostController) {
@@ -69,14 +83,19 @@ fun FaceCaptureScreen(navController: NavHostController) {
 
 
 fun extractEmbedding(context: Context, bitmap: Bitmap): FloatArray {
-        val model = FileUtil.loadMappedFile(context, "mobile_face_net.tflite")
-        val interpreter = Interpreter(model)
-        val input = preprocessFaceBitmap(bitmap)
-        val output = Array(1) { FloatArray(128) }
+    val model = FileUtil.loadMappedFile(context, "MobileFaceNet.tflite")
+    val interpreter = Interpreter(model)
 
-        interpreter.run(input, output)
-        return output[0]
-    }
+    val inputBuffer = preprocessFaceBitmap(context, bitmap)
+    val output = Array(2) { FloatArray(192) }
+
+    val inputTensor = interpreter.getInputTensor(0)
+    Log.d("Model", "Input shape: ${inputTensor.shape().joinToString()}")
+    Log.d("Model", "Input type: ${inputTensor.dataType()}")
+
+    interpreter.run(inputBuffer, output)
+    return output[0]
+}
 
 @androidx.annotation.OptIn(ExperimentalGetImage::class)
 fun imageProxyToBitmap(imageProxy: ImageProxy): Bitmap? {
@@ -154,18 +173,31 @@ fun processImageProxy(
                     val bitmap = imageProxyToBitmap(imageProxy)
                     if (bitmap != null) {
                         val newEmbedding = extractEmbedding(context, bitmap)
-                        val savedEmbedding = loadEmbeddingFromFile(context)
+                        val file = File(context.filesDir, "Facelogin.id")
 
-                        if (savedEmbedding != null) {
-                            val similarity = cosineSimilarity(savedEmbedding, newEmbedding)
-                            val isRecognized = similarity > 0.8f
-                            onResult(isRecognized)
+                        if (!file.exists()) {
+                            // Зберігаємо перше обличчя
+                            file.writeText(newEmbedding.joinToString(","))
+                            Log.d("FaceCapture", "Еталонне обличчя збережено")
+                            onResult(true) // Вважаємо, що це успішний вхід
                         } else {
-                            Log.e("FaceCapture", "Еталонне обличчя не знайдено")
-                            onResult(false)
+                            val savedEmbedding = file.readText()
+                                .split(",")
+                                .map { it.toFloat() }
+                                .toFloatArray()
+
+                            val similarity = cosineSimilarity(savedEmbedding, newEmbedding)
+                            Log.d("FaceCapture", "Cosine similarity: $similarity")
+
+                            val isRecognized = similarity > 0.75f // Можна налаштувати поріг
+                            onResult(isRecognized)
                         }
+                    } else {
+                        Log.e("FaceCapture", "Не вдалося конвертувати зображення")
+                        onResult(false)
                     }
                 } else {
+                    Log.d("FaceCapture", "Обличчя не знайдено")
                     onResult(false)
                 }
             }
@@ -181,75 +213,6 @@ fun processImageProxy(
         onResult(false)
     }
 }
-
-/*
-@Composable
-fun FaceCaptureScreen(onFaceCaptured: () -> Unit) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-    val executor = remember { Executors.newSingleThreadExecutor() }
-
-    AndroidView(factory = {
-        PreviewView(it).apply {
-            layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-        }
-    }, update = { previewView ->
-        val permission = Manifest.permission.CAMERA
-        if (ContextCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-            // Запит дозволу
-            val activity = context as? Activity
-            activity?.let {
-                ActivityCompat.requestPermissions(it, arrayOf(permission), 0)
-            }
-            Toast.makeText(context, "Потрібен дозвіл на камеру", Toast.LENGTH_SHORT).show()
-            return@AndroidView
-        }
-
-        try {
-            val cameraProvider = cameraProviderFuture.get()
-
-            val preview = Preview.Builder().build().also {
-                it.setSurfaceProvider(previewView.surfaceProvider)
-            }
-
-            val imageAnalyzer = ImageAnalysis.Builder().build().also {
-                it.setAnalyzer(executor) { imageProxy ->
-                    processImageProxy(
-                        imageProxy = imageProxy,
-                        context = context,
-                        onResult = { isRecognized ->
-                            if (isRecognized) {
-                                Toast.makeText(context, "Обличчя впізнано!", Toast.LENGTH_SHORT).show()
-                                onFaceCaptured()
-                            } else {
-                                Toast.makeText(context, "Обличчя не впізнано!", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    )
-                }
-            }
-
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-            cameraProvider.unbindAll()
-            cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                cameraSelector,
-                preview,
-                imageAnalyzer
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(context, "Помилка запуску камери: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    })
-}
-
- */
 
 @Composable
 fun FaceCaptureScreen(onFaceCaptured: () -> Unit) {
