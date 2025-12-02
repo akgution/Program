@@ -1,11 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.stopchase">
 
     <!-- Це ми додаємо дозвіл на використання камери -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+
+
     <application
+
+
 
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -27,7 +35,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Це ми додаємо дозвіл на використання камери -->
+        <service
+            android:name=".screens.FaceMonitorService"
+            android:exported="false"
+            android:foregroundServiceType="camera"
+            tools:ignore="ForegroundServicePermission" />
 
     </application>
 </manifest>

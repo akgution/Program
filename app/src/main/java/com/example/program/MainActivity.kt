@@ -57,6 +57,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.stopchase.screens.FaceCaptureScreen
 import com.example.stopchase.screens.SplashScreen
+import com.example.stopchase.screens.SetupScreen
 
 // Test gitHub
 
@@ -72,6 +73,7 @@ class MainActivity : ComponentActivity() {
             )
         }
     }*/
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,15 +92,14 @@ class MainActivity : ComponentActivity() {
                 composable("face_capture") {
                     FaceCaptureScreen(
                         onFaceCaptured = {
-                            navController.navigate("home")
+                            navController.navigate("setup") // ⬅️ зміна з "home" на "setup"
                         }
                     )
                 }
-                /*
-                composable("home") {
-                    HomeScreen()
+
+                composable("setup") {
+                    SetupScreen() // ⬅️ новий екран замість HomeScreen
                 }
-                                 */
             }
         }
     }

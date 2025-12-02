@@ -1,5 +1,7 @@
 package com.example.stopchase.screens
 
+import android.content.Intent
+import android.os.Build
 import com.example.stopchase.R
 
 import androidx.compose.foundation.background
@@ -20,6 +22,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 
+import android.provider.Settings
+import android.net.Uri
 
 @Composable
 fun SplashScreen(
@@ -27,6 +31,14 @@ fun SplashScreen(
 ) {
     val context = LocalContext.current
     val imageProxyRef = remember { mutableStateOf<ImageProxy?>(null) }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:" + context.packageName)
+        )
+        context.startActivity(intent)
+    }
 
     Box(
         modifier = Modifier
