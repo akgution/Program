@@ -1,5 +1,7 @@
 package com.example.stopchase.screens
 
+import android.content.Intent
+import android.os.Build
 import com.example.stopchase.R
 
 import androidx.compose.foundation.background
@@ -14,12 +16,30 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
+import android.widget.Toast
+import androidx.camera.core.ImageProxy
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 
+import android.provider.Settings
+import android.net.Uri
 
 @Composable
-fun SplashScreen() {
+fun SplashScreen(
+    onFaceLogin: () -> Unit // ⬅️ новий параметр
+) {
+    val context = LocalContext.current
+    val imageProxyRef = remember { mutableStateOf<ImageProxy?>(null) }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+        val intent = Intent(
+            Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+            Uri.parse("package:" + context.packageName)
+        )
+        context.startActivity(intent)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -36,8 +56,6 @@ fun SplashScreen() {
         ) {
             Icon(
                 painter = painterResource(id = R.drawable.ic_shield_eye),
-                //imageVector = Icons.Default.Visibility,
-
                 contentDescription = "Logo",
                 tint = Color.White,
                 modifier = Modifier.size(100.dp)
@@ -56,12 +74,25 @@ fun SplashScreen() {
                 color = Color.LightGray
             )
 
-            Button(
-                onClick = { /* TODO: Face ID login */ },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-            ) {
-                Text(text = "Face ID / Вхід", color = Color.White)
+            Button(onClick = {
+                val imageProxy = imageProxyRef.value
+                if (imageProxy != null) {
+                    processImageProxy(imageProxy, context) { isRecognized ->
+                        if (isRecognized) {
+                            Toast.makeText(context, "Обличчя впізнано!", Toast.LENGTH_SHORT).show()
+                            onFaceLogin()
+                        } else {
+                            Toast.makeText(context, "Обличчя не впізнано!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } else {
+                    Toast.makeText(context, "Камера запускається для зчитування обличчя", Toast.LENGTH_SHORT).show()
+                    onFaceLogin() // ⬅️ Переходимо на екран з камерою
+                }
+            }) {
+                Text("Підтвердити обличчя")
             }
+
         }
     }
 }
