@@ -62,6 +62,8 @@ class FaceMonitorService : LifecycleService() {
         val mediaImage = imageProxy.image ?: return imageProxy.close()
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
 
+        Log.d("FaceMonitor", "processImage запущено")
+
         faceDetector.process(image)
             .addOnSuccessListener { faces ->
                 val shouldHide = faces.isEmpty() || faces.any {
@@ -77,6 +79,7 @@ class FaceMonitorService : LifecycleService() {
                 // 🔥 Керуємо OverlayService
                 // 🔥 Керуємо OverlayService
                 if (shouldHide && !overlayVisible) {
+                    Log.d("FaceMonitor", "Перевірка overlay: shouldHide=$shouldHide, overlayVisible=$overlayVisible")
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
                         startService(Intent(this, OverlayService::class.java))
                         overlayVisible = true

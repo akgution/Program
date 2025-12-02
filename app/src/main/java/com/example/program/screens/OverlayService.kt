@@ -6,6 +6,7 @@ import android.content.Intent
 import android.graphics.PixelFormat
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
@@ -17,6 +18,8 @@ class OverlayService : Service() {
 
     @SuppressLint("ServiceCast")
     override fun onCreate() {
+        Log.d("OverlayService", "onCreate викликано")
+
         super.onCreate()
 
         val inflater = getSystemService(LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -37,6 +40,10 @@ class OverlayService : Service() {
         windowManager.addView(overlayView, params)
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("OverlayService", "onStartCommand викликано")
+        return START_NOT_STICKY
+    }
     override fun onDestroy() {
         super.onDestroy()
         windowManager.removeView(overlayView)

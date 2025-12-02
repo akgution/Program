@@ -41,5 +41,10 @@
             android:foregroundServiceType="camera"
             tools:ignore="ForegroundServicePermission" />
 
+        <service
+            android:name=".screens.OverlayService"
+            android:exported="false"
+            tools:ignore="ExportedService" />
+
     </application>
 </manifest>
