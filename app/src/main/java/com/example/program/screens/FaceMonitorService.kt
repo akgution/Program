@@ -7,6 +7,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import androidx.annotation.OptIn
 import androidx.camera.core.CameraSelector
@@ -74,9 +75,14 @@ class FaceMonitorService : LifecycleService() {
                 sendBroadcast(broadcastIntent)
 
                 // 🔥 Керуємо OverlayService
+                // 🔥 Керуємо OverlayService
                 if (shouldHide && !overlayVisible) {
-                    startService(Intent(this, OverlayService::class.java))
-                    overlayVisible = true
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || Settings.canDrawOverlays(this)) {
+                        startService(Intent(this, OverlayService::class.java))
+                        overlayVisible = true
+                    } else {
+                        Log.w("FaceMonitor", "Немає дозволу на накладку — OverlayService не запущено")
+                    }
                 } else if (!shouldHide && overlayVisible) {
                     stopService(Intent(this, OverlayService::class.java))
                     overlayVisible = false
