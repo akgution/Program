@@ -47,16 +47,21 @@ fun SetupScreen() {
                 shouldObscureState.value = value
             }
         }
-        context.registerReceiver(receiver, IntentFilter("com.example.stopchase.OBSCURE_UPDATE"))
+        //context.registerReceiver(receiver, IntentFilter("com.example.stopchase.OBSCURE_UPDATE"))
+        context.registerReceiver(
+            receiver,
+            IntentFilter("com.example.stopchase.OBSCURE_UPDATE"),
+            Context.RECEIVER_NOT_EXPORTED
+        )
 
         onDispose {
             context.unregisterReceiver(receiver)
         }
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+/*    Box(modifier = Modifier.fillMaxSize()) {
         FaceMonitorOverlay(shouldObscureFlow = shouldObscureState.asStateFlow())
-    }
+    }*/
 
     Column(
         modifier = Modifier
